@@ -147,16 +147,31 @@ class Road:
 			
 
 
-class Crosses:
+class City_traffic:
     def __init__(self): # 所有路口统一管理的类
-        self.all_crosses=[]  
-		
-	def second_step_plan(self): 	# 模仿任务书v1.4第22页中系统处理调度逻辑的第二步	
-		# 7.整个系统调度按路口ID升序进行调度各个路口，路口内各道路按道路ID升序进行调度。每个路口遍历道路时，只调度该道路出路口的方向
-		for i in range(len(self.all_crosses)):
-			self.all_crosses[i].
+        self.all_crosses=[]
+        self.all_roads=[]
+        self.all_cars=[]
 
-	
+    def second_step_plan(self): 	# 模仿任务书v1.4第22页中系统处理调度逻辑的第二步
+        # 7.整个系统调度按路口ID升序进行调度各个路口，路口内各道路按道路ID升序进行调度。每个路口遍历道路时，只调度该道路出路口的方向
+        for i in range(len(self.all_crosses)):
+            if self.all_crosses[i]:
+                Cross.()
+
+
+    def get_file_path(self,file_path,roads):
+        with open(file_path) as file_object:
+            lines = file_object.readlines()
+
+        for i in range(1, len(lines)):
+            One_Cross = lines[i].replace("(", '').replace(",", '').replace(')', '').split()
+            myCross=Cross(One_Cross[0])
+            myCross.road_id_dict={One_Cross[1]:1,One_Cross[2]:2,One_Cross[3]:3,One_Cross[4]:4}
+            myCross.get_road([One_Cross[1],One_Cross[2],One_Cross[3],One_Cross[4]])
+            self.all_crosses.append(myCross)
+
+
 			
 	
 class Cross:
@@ -206,8 +221,13 @@ class Cross:
 	
     def notice_road(self):  # 向道路发出通知，一辆汽车已经驶入你所在的路段
         pass
-		
-			
+
+
+def get_road(self, roads):
+	while roads:
+		if min(roads) != -1:
+			self.road.append(self.seach_road(min(roads)))
+			roads.pop(roads.index(min(roads)))
 
 		
 		
