@@ -147,15 +147,43 @@ class Road:
 			
 
 
-class Crosses:
+class City_traffic:
     def __init__(self): # 所有路口统一管理的类
-        self.all_crosses=[]  
-		
-	def second_step_plan(self): 	# 模仿任务书v1.4第22页中系统处理调度逻辑的第二步	
-		# 7.整个系统调度按路口ID升序进行调度各个路口，路口内各道路按道路ID升序进行调度。每个路口遍历道路时，只调度该道路出路口的方向
-		for i in range(len(self.all_crosses)):
-			self.all_crosses[i].
+        self.all_crosses=[]
+        self.all_roads=[]
+        self.all_cars=[]
 
+    def second_step_plan(self): 	# 模仿任务书v1.4第22页中系统处理调度逻辑的第二步
+        # 7.整个系统调度按路口ID升序进行调度各个路口，路口内各道路按道路ID升序进行调度。每个路口遍历道路时，只调度该道路出路口的方向
+        for i in self.all_crosses:
+            i.deal_wait_cars()
+
+
+
+    def get_cross_path(self,file_path,roads):
+        with open(file_path) as file_object:
+            lines = file_object.readlines()
+
+        for i in range(1, len(lines)):
+            One_Cross = lines[i].replace("(", '').replace(",", '').replace(')', '').split()
+            myCross=Cross(One_Cross[0])
+            myCross.road_id_dict={One_Cross[1]:1,One_Cross[2]:2,One_Cross[3]:3,One_Cross[4]:4}
+            myCross.get_road([One_Cross[1],One_Cross[2],One_Cross[3],One_Cross[4]])
+            self.all_crosses.append(myCross)
+
+    def get_road_path(self, file_path):
+        with open(file_path) as file_object:
+            lines = file_object.readlines()
+
+        for i in range(1, len(lines)):
+            One_Road = lines[i].replace("(", '').replace(",", '').replace(')', '').split()
+            myRoad = Road(One_Road[0],One_Road[4],One_Road[5], One_Road[1], One_Road[2], One_Road[6], One_Road[3])
+            self.all_roads.append(myRoad)
+
+    def search_road_by_id(self,road_id): #road_id 应为'00001'不可以为int型
+        for i in self.all_roads:
+            if road_id == i.rid:
+                return i
 	
 			
 	
@@ -165,9 +193,7 @@ class Cross:
         self.road=[] # 存放相连的道路的指针,按照道路升序存放,注意，这个指针只能用来访问信息或调用查询类的方法，但不能进行修改,否则在并行化上会产生问题
 		self.road_id_dict={rcd1:1,rcd1:2,rcd1:3,rcd1:4} # 使用字典存放道路的原始顺序{道路id:n}，保留路口的二维信息
 		
-		
-	def seach_road(self,rid): #根据道路id获得道路指针
-		for i in range(len(self.road)
+
 
 	def deal_wait_cars(self):   # 第二步的主步骤，处理该路口的等待车辆下一步的位置
 		while True: 			# 直到所有道路都没有等待车辆，或者还有车辆的道路上的第一优先级的车辆处于冲突状态,while循环内是一个时间单位(并行)
@@ -183,10 +209,18 @@ class Cross:
 					pass
 				elif go_direction=='R':	# 右转要看其左侧车道是否有车辆要直行，对面车道是否右侧有左转，同时目标道路要有空位
 					pass
-	
-	def cal_go_pos(self,car): #计算car是否可以通过路口，如果可以求出通过路口的理想下一位置（不一定是实际的下一位置）
-		bow_Mspeed,next_Mspeed=car.road.limit
-		
+
+
+	def cal_go_pos(self, car, next_road_id):  # 计算car是否可以通过路口，如果可以求出通过路口的理想下一位置（不一定是实际的下一位置）
+		bow_Mspeed = int(car.road.limit)
+		ct = City_traffic()
+		next_road = ct.search_road_by_id(next_road_id) #获得错误，待修改
+		next_Mspeed = int(next_road.limit)
+		if distance >= next_Mspeed:  # distance：车辆据路口位置,待实现
+			car  # 汽车不能通过路口，直接确定汽车的位置状态
+			return 0
+		else:
+			return next_Mspeed - distance
 		
 	def rule(self,rid,goid): # 交通规则处理函数
 		# 右转，左转比直行优先级低
@@ -206,8 +240,13 @@ class Cross:
 	
     def notice_road(self):  # 向道路发出通知，一辆汽车已经驶入你所在的路段
         pass
-		
-			
+
+
+	def get_road(self, roads):
+		while roads:
+			if min(roads) != -1:
+				self.road.append(self.seach_road(min(roads)))
+				roads.pop(roads.index(min(roads)))
 
 		
 		
