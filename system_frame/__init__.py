@@ -188,27 +188,73 @@ class City_traffic:
 			
 	
 class Cross:
-    def __init__(self,cid):
-		self.cid=cid # 路口id
-        self.road=[] # 存放相连的道路的指针,按照道路升序存放,注意，这个指针只能用来访问信息或调用查询类的方法，但不能进行修改,否则在并行化上会产生问题
-		self.road_id_dict={rcd1:1,rcd1:2,rcd1:3,rcd1:4} # 使用字典存放道路的原始顺序{道路id:n}，保留路口的二维信息
-		
+    def __init__(self, cid):
+        self.cid = cid  # 路口id
+        self.road = []  # 存放相连的道路的指针,按照道路升序存放,注意，这个指针只能用来访问信息或调用查询类的方法，但不能进行修改,否则在并行化上会产生问题
+        self.road_id_dict = {rcd1: 1, rcd1: 2, rcd1: 3, rcd1: 4}  # 使用字典存放道路的原始顺序{道路id:n}，保留路口的二维信息
+        self.road_id_dict2 = dict(zip(self.road_id_dict.values(),self.road_id_dict.keys()))
+
+    def deal_wait_cars(self):  # 第二步的主步骤，处理该路口的等待车辆下一步的位置
+        t=1
+        while t:  # 直到所有道路都没有等待车辆，或者还有车辆的道路上的第一优先级的车辆处于冲突状态,while循环内是一个时间单位(并行)
+            topCars = []
+            for i in range(len(self.road)):
+                now_car = self.road[i].top_priority(self.cid)  # 获得该道路的最高优先级汽车
+                if now_car == None:
+                    t=0
+                    break
+                go_direction = self.judging_direction(now_car)  # 求出该车去向（直行左转右转）
+                go_road = now_car.road_plan[1]  # 求出该车的下一目的道路id(整数，不是指针)
+                go_pos =
+                go_road_value = self.road_id_dict[now_car.road.r_id]
+                direct_road_value = abs(go_road_value - 2)  #
+                direct_road_id = self.road_id_dict2[direct_road_value]
+                if now_car.road.limit <= now_car.speed :
+                    now_car.speed = now_car.road.limit
+                elif now_car.road.limit > now_car.speed and now_car.road.limit >= now_car.max_speed:
+                    now_car.speed = now_car.max_speed
+                elif now_car.road.limit > now_car.speed and now_car.road.limit < now_car.max_speed:
+                    now_car.speed = now_car.road.limit
+                go_distance = self.cal_go_pos(now_car, go_road)
+                if go_direction == 'D':  # 直行只需要看目标道路是否有空余位置
+                    if go_distance != 0:
+                        for j in range(go_distance-1):
+                            for k in range(go_distance-1,-1,-1):
+                                if roadList[j][k] == 0: #道路列表
+                                    pass #下一条道路增加新的车辆(break)  需要在road中增加方法
 
 
-	def deal_wait_cars(self):   # 第二步的主步骤，处理该路口的等待车辆下一步的位置
-		while True: 			# 直到所有道路都没有等待车辆，或者还有车辆的道路上的第一优先级的车辆处于冲突状态,while循环内是一个时间单位(并行)
-			topCars=[] 
-			for i in range(len(self.road)):
-				now_car=self.road[i].top_priority(self.cid)  # 获得该道路的最高优先级汽车
-				go_direction=self.judging_direction(now_car) #求出该车去向（直行左转右转）
-				go_road=now_car.road_plan[1] # 求出该车的下一目的道路id(整数，不是指针)
-				go_pos=
-				if go_direction=='D': # 直行只需要看目标道路是否有空余位置
-					pass
-				elif go_direction=='L':  # 左转要看其右侧车道是否有车辆要直行，同时目标道路要有空位
-					pass
-				elif go_direction=='R':	# 右转要看其左侧车道是否有车辆要直行，对面车道是否右侧有左转，同时目标道路要有空位
-					pass
+                elif go_direction == 'L':  # 左转要看其右侧车道是否有车辆要直行，同时目标道路要有空位
+                    go_road_value = self.road_id_dict[now_car.road.r_id]
+                    right_road_value=(go_road_value-2)%4+1  #
+                    right_road_id = self.road_id_dict2[right_road_value]
+                    right_now_car = self.road[i].top_priority(right_road_id)
+                    if self.judging_direction(right_now_car)=='D':
+                        continue  # 交规冲突，只能等待
+                    else:
+                        if go_distance != 0:
+                            for j in range(go_distance - 1):
+                                for k in range(go_distance - 1, -1, -1):
+                                    if roadList[j][k] == 0:  # 道路列表
+                                        pass  # 下一条道路增加新的车辆(break)
+
+                elif go_direction == 'R':  # 右转要看其左侧车道是否有车辆要直行，对面车道是否右侧有左转，同时目标道路要有空位
+                    go_road_value = self.road_id_dict[now_car.road.r_id]
+                    left_road_value = go_road_value%4+1  #
+                    direct_road_value = abs(go_road_value-2)
+                    left_road_id = self.road_id_dict2[left_road_value]
+                    direct_road_id = self.road_id_dict2[direct_road_value]
+                    left_now_car = self.road[i].top_priority(left_road_id)
+                    direct_now_car = self.road[i].top_priority(direct_road_id)
+
+                    if self.judging_direction(left_now_car) == 'D'or self.judging_direction(direct_now_car) == 'L':
+                        continue #交规冲突，只能等待
+                    else:
+                        if go_distance != 0:
+                            for j in range(go_distance - 1):
+                                for k in range(go_distance - 1, -1, -1):
+                                    if roadList[j][k] == 0:  # 道路列表
+                                        pass  # 下一条道路增加新的车辆(break)
 
 
 	def cal_go_pos(self, car, next_road_id):  # 计算car是否可以通过路口，如果可以求出通过路口的理想下一位置（不一定是实际的下一位置）
